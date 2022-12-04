@@ -1,6 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from "@testing-library/react";
 import mockFetch from "./mocks/mockFetch";
 import App from "./App";
+import userEvent from "@testing-library/user-event";
 
 beforeEach(() => {
   jest.spyOn(window, "fetch").mockImplementation(mockFetch);
@@ -39,4 +44,30 @@ test("renders the landing page", async () => {
   // or the element is a descendant of a form element with a disabled attribute.
 
   expect(screen.getByRole("img")).toBeInTheDocument();
+});
+
+test("should be able to search and display dog image results", async () => {
+  render(<App />);
+
+  // Simulating selecting an option and verifying its value
+  const select = screen.getByRole("combobox");
+  expect(
+    await screen.findByRole("option", { name: "cattledog" })
+  ).toBeInTheDocument();
+  userEvent.selectOptions(select, "cattledog");
+  expect(select).toHaveValue("cattledog");
+
+  // Initiate the search request
+  const searchBtn = screen.getByRole("button", { name: "Search" });
+  userEvent.click(searchBtn);
+
+  // Loading state displays and gets removed once results are displayed
+  await waitForElementToBeRemoved(() => screen.queryByText(/Loading/i));
+
+  // Verify image display and results count
+  const dogImages = screen.getAllByRole("img");
+  expect(dogImages).toHaveLength(2);
+  expect(screen.getByText(/2 Results/i)).toBeInTheDocument();
+  expect(dogImages[0]).toHaveAccessibleName("cattledog 1 of 2");
+  expect(dogImages[1]).toHaveAccessibleName("cattledog 2 of 2");
 });
