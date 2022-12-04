@@ -1,7 +1,16 @@
 import { render, screen } from "@testing-library/react";
+import mockFetch from "./mocks/mockFetch";
 import App from "./App";
 
-test("renders the landing page", () => {
+beforeEach(() => {
+  jest.spyOn(window, "fetch").mockImplementation(mockFetch);
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
+test("renders the landing page", async () => {
   render(<App />);
 
   expect(screen.getByRole("heading")).toHaveTextContent(/Doggy Directory/);
@@ -17,6 +26,10 @@ test("renders the landing page", () => {
   // has the specified displayed value(the one the end user will see).
   // It accepts, and elements with the exception of and, which can be
   // meaningfully matched only using toBeChecked or toHaveFormValues.
+
+  expect(
+    await screen.findByRole("option", { name: "husky" })
+  ).toBeInTheDocument();
 
   expect(screen.getByRole("button", { name: "Search" })).toBeDisabled();
 
